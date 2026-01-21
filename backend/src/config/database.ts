@@ -7,7 +7,7 @@ const DB_PATH = process.env.DB_PATH || './data/airsense.db';
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
 // Create and configure database
@@ -19,8 +19,8 @@ db.exec('PRAGMA foreign_keys = ON;');
 
 // Initialize database schema
 export function initializeDatabase() {
-    // Create devices table
-    db.exec(`
+  // Create devices table
+  db.exec(`
     CREATE TABLE IF NOT EXISTS devices (
       device_id TEXT PRIMARY KEY,
       api_key TEXT NOT NULL UNIQUE,
@@ -32,18 +32,19 @@ export function initializeDatabase() {
     );
   `);
 
-    // Create index for API key lookup
-    db.exec(`
+  // Create index for API key lookup
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_devices_api_key ON devices(api_key);
   `);
 
-    // Create air_readings table
-    db.exec(`
+  // Create air_readings table for DHT22 + MQ135 sensors
+  db.exec(`
     CREATE TABLE IF NOT EXISTS air_readings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       device_id TEXT NOT NULL,
-      pm25 REAL NOT NULL,
-      pm10 REAL NOT NULL,
+      temperature REAL NOT NULL,
+      humidity REAL NOT NULL,
+      air_quality_ppm REAL NOT NULL,
       aqi INTEGER NOT NULL,
       air_quality_level TEXT NOT NULL,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -51,20 +52,20 @@ export function initializeDatabase() {
     );
   `);
 
-    // Create indexes for performance
-    db.exec(`
+  // Create indexes for performance
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_air_readings_device_id ON air_readings(device_id);
   `);
 
-    db.exec(`
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_air_readings_timestamp ON air_readings(timestamp);
   `);
 
-    db.exec(`
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_air_readings_aqi ON air_readings(aqi);
   `);
 
-    console.log('✅ Database initialized successfully');
+  console.log('✅ Database initialized successfully');
 }
 
 export default db;
