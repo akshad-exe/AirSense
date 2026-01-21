@@ -7,13 +7,14 @@ import logger from '../utils/logger';
 /**
  * POST /api/air-data
  * Receive sensor data from ESP32 devices
+ * Expects: temperature (DHT22), humidity (DHT22), air_quality_ppm (MQ135)
  */
 export async function postAirData(
     req: AuthenticatedRequest,
     res: Response<ApiResponse>
 ): Promise<void> {
     try {
-        const { device_id, pm25, pm10 } = req.body;
+        const { device_id, temperature, humidity, air_quality_ppm } = req.body;
 
         // Verify device_id matches authenticated device
         if (req.device && req.device.device_id !== device_id) {
@@ -25,13 +26,14 @@ export async function postAirData(
         }
 
         // Store the reading
-        const reading = storeReading({ device_id, pm25, pm10 });
+        const reading = storeReading({ device_id, temperature, humidity, air_quality_ppm });
 
         // Broadcast update via WebSocket
         broadcastAQIUpdate({
             device_id: reading.device_id,
-            pm25: reading.pm25,
-            pm10: reading.pm10,
+            temperature: reading.temperature,
+            humidity: reading.humidity,
+            air_quality_ppm: reading.air_quality_ppm,
             aqi: reading.aqi,
             air_quality_level: reading.air_quality_level,
             timestamp: reading.timestamp
@@ -42,6 +44,9 @@ export async function postAirData(
             success: true,
             data: {
                 id: reading.id,
+                temperature: reading.temperature,
+                humidity: reading.humidity,
+                air_quality_ppm: reading.air_quality_ppm,
                 aqi: reading.aqi,
                 air_quality_level: reading.air_quality_level,
                 timestamp: reading.timestamp
