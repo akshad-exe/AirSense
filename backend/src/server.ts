@@ -26,7 +26,7 @@ const HEARTBEAT_CHECK_INTERVAL = parseInt(
 async function startServer() {
     try {
         // Initialize database
-        logger.info('Initializing database...');
+        console.log('🔧 Initializing database...');
         initializeDatabase();
 
         // Create Express app
@@ -36,38 +36,34 @@ async function startServer() {
         const server = http.createServer(app);
 
         // Initialize WebSocket
-        logger.info('Initializing WebSocket server...');
+        console.log('🔧 Initializing WebSocket server...');
         initializeWebSocket(server);
 
         // Start device heartbeat monitoring
-        logger.info('Starting device heartbeat monitoring...');
+        console.log('🔧 Starting device heartbeat monitoring...');
         setInterval(() => {
             checkOfflineDevices(DEVICE_OFFLINE_THRESHOLD);
         }, HEARTBEAT_CHECK_INTERVAL);
 
         // Start server
         server.listen(PORT, HOST, () => {
-            logger.info(`
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║              🌍 AirSense Backend Server                   ║
-║                                                            ║
-║  Server running at: http://${HOST}:${PORT}${' '.repeat(Math.max(0, 22 - HOST.length - String(PORT).length))}║
-║  Environment: ${process.env.NODE_ENV || 'development'}${' '.repeat(Math.max(0, 42 - (process.env.NODE_ENV || 'development').length))}║
-║  WebSocket: Enabled                                        ║
-║  Database: SQLite (Bun)                                    ║
-║                                                            ║
-║  API Endpoints:                                            ║
-║    POST   /api/air-data                                    ║
-║    GET    /api/latest                                      ║
-║    GET    /api/history                                     ║
-║    GET    /api/devices                                     ║
-║    GET    /api/devices/:deviceId                           ║
-║    POST   /api/devices/register                            ║
-║    GET    /health                                          ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
-      `);
+            // Clean console output for startup banner
+            console.log('\n' + '='.repeat(60));
+            console.log('🌍  AirSense Backend Server');
+            console.log('='.repeat(60));
+            console.log(`📡  Server:      http://${HOST}:${PORT}`);
+            console.log(`🌐  Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`💾  Database:    SQLite (Bun)`);
+            console.log(`🔌  WebSocket:   Enabled`);
+            console.log('='.repeat(60));
+            console.log('📋  Quick Links:');
+            console.log(`    Health:     http://${HOST}:${PORT}/health`);
+            if (process.env.NODE_ENV !== 'production') {
+                console.log(`    Endpoints:  http://${HOST}:${PORT}/api/endpoints`);
+            }
+            console.log('='.repeat(60) + '\n');
+
+            logger.info(`Server started on http://${HOST}:${PORT}`);
         });
 
         // Graceful shutdown

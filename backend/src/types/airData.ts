@@ -1,8 +1,9 @@
 export interface AirReading {
     id?: number;
     device_id: string;
-    pm25: number;
-    pm10: number;
+    temperature: number;        // DHT22 sensor
+    humidity: number;           // DHT22 sensor
+    air_quality_ppm: number;    // MQ135 sensor
     aqi: number;
     air_quality_level: string;
     timestamp?: string;
@@ -10,8 +11,9 @@ export interface AirReading {
 
 export interface AirReadingInput {
     device_id: string;
-    pm25: number;
-    pm10: number;
+    temperature: number;
+    humidity: number;
+    air_quality_ppm: number;
     api_key: string;
 }
 
