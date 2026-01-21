@@ -4,11 +4,14 @@ import logger from '../utils/logger';
 
 /**
  * Validation schema for air data input
+ * DHT22: temperature, humidity
+ * MQ135: air_quality_ppm
  */
 const airDataSchema = Joi.object({
     device_id: Joi.string().required().min(3).max(100),
-    pm25: Joi.number().required().min(0).max(1000),
-    pm10: Joi.number().required().min(0).max(1000),
+    temperature: Joi.number().required().min(-40).max(80),     // DHT22 range
+    humidity: Joi.number().required().min(0).max(100),          // DHT22 range
+    air_quality_ppm: Joi.number().required().min(0).max(1000), // MQ135 range
     api_key: Joi.string().optional() // Can be in header or body
 });
 
