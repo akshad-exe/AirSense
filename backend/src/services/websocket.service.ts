@@ -32,7 +32,7 @@ export function initializeWebSocket(server: Server): void {
         });
     });
 
-    logger.info('WebSocket server initialized');
+    console.log('✅ WebSocket server initialized');
 }
 
 /**

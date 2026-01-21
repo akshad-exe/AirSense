@@ -1,39 +1,47 @@
-import { PM25_BREAKPOINTS, PM10_BREAKPOINTS, AQI_CATEGORIES } from '../config/constants';
-import { AQIBreakpoint, AQICategory } from '../types/airData';
+import { AQI_CATEGORIES } from '../config/constants';
+import { AQICategory } from '../types/airData';
 
 /**
- * Calculate AQI for a given pollutant concentration
- * Uses the US EPA AQI calculation formula
+ * MQ135 PPM to AQI Conversion Breakpoints
+ * Based on air quality standards for general air pollutants
+ * MQ135 detects: CO2, NH3, NOx, Alcohol, Benzene, Smoke
  */
-function calculateAQI(concentration: number, breakpoints: AQIBreakpoint[]): number {
+const PPM_BREAKPOINTS = [
+    { cLow: 0, cHigh: 50, iLow: 0, iHigh: 50 },       // Good
+    { cLow: 51, cHigh: 100, iLow: 51, iHigh: 100 },   // Moderate
+    { cLow: 101, cHigh: 200, iLow: 101, iHigh: 150 }, // Unhealthy for Sensitive
+    { cLow: 201, cHigh: 300, iLow: 151, iHigh: 200 }, // Unhealthy
+    { cLow: 301, cHigh: 500, iLow: 201, iHigh: 300 }, // Very Unhealthy
+    { cLow: 501, cHigh: 1000, iLow: 301, iHigh: 500 } // Hazardous
+];
+
+/**
+ * Calculate AQI from MQ135 PPM value
+ */
+function calculateAQIFromPPM(ppm: number): number {
     // Find the appropriate breakpoint
-    const bp = breakpoints.find(
-        b => concentration >= b.cLow && concentration <= b.cHigh
+    const bp = PPM_BREAKPOINTS.find(
+        b => ppm >= b.cLow && ppm <= b.cHigh
     );
 
     // If concentration is out of range, return max AQI
     if (!bp) {
-        return 500;
+        return ppm > 1000 ? 500 : 0;
     }
 
     const { cLow, cHigh, iLow, iHigh } = bp;
 
     // Apply the AQI formula
-    const aqi = ((iHigh - iLow) / (cHigh - cLow)) * (concentration - cLow) + iLow;
+    const aqi = ((iHigh - iLow) / (cHigh - cLow)) * (ppm - cLow) + iLow;
 
     return Math.round(aqi);
 }
 
 /**
- * Calculate AQI from PM2.5 and PM10 values
- * Returns the higher of the two AQI values
+ * Calculate AQI from MQ135 air quality PPM
  */
-export function getAQI(pm25: number, pm10: number): number {
-    const aqi25 = calculateAQI(pm25, PM25_BREAKPOINTS);
-    const aqi10 = calculateAQI(pm10, PM10_BREAKPOINTS);
-
-    // Return the higher AQI (more restrictive)
-    return Math.max(aqi25, aqi10);
+export function getAQI(airQualityPPM: number): number {
+    return calculateAQIFromPPM(airQualityPPM);
 }
 
 /**
@@ -49,31 +57,43 @@ export function getAQICategory(aqi: number): AQICategory {
 }
 
 /**
- * Validate PM values are within acceptable ranges
+ * Validate sensor values are within acceptable ranges
  */
-export function validatePMValues(pm25: number, pm10: number): boolean {
+export function validateSensorValues(
+    temperature: number,
+    humidity: number,
+    airQualityPPM: number
+): boolean {
     return (
-        pm25 >= 0 && pm25 <= 1000 &&
-        pm10 >= 0 && pm10 <= 1000 &&
-        !isNaN(pm25) && !isNaN(pm10)
+        temperature >= -40 && temperature <= 80 &&      // DHT22 range
+        humidity >= 0 && humidity <= 100 &&              // DHT22 range
+        airQualityPPM >= 0 && airQualityPPM <= 1000 &&  // MQ135 range
+        !isNaN(temperature) && !isNaN(humidity) && !isNaN(airQualityPPM)
     );
 }
 
 /**
- * Get complete AQI information
+ * Get complete AQI information from sensor data
  */
-export function getAQIInfo(pm25: number, pm10: number) {
-    if (!validatePMValues(pm25, pm10)) {
-        throw new Error('Invalid PM values');
+export function getAQIInfo(
+    temperature: number,
+    humidity: number,
+    airQualityPPM: number
+) {
+    if (!validateSensorValues(temperature, humidity, airQualityPPM)) {
+        throw new Error('Invalid sensor values');
     }
 
-    const aqi = getAQI(pm25, pm10);
+    const aqi = getAQI(airQualityPPM);
     const category = getAQICategory(aqi);
 
     return {
         aqi,
         level: category.level,
         suggestion: category.suggestion,
-        color: category.color
+        color: category.color,
+        temperature,
+        humidity,
+        airQualityPPM
     };
 }

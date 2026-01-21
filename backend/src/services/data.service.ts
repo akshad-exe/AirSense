@@ -9,21 +9,22 @@ import logger from '../utils/logger';
  */
 export function storeReading(input: Omit<AirReadingInput, 'api_key'>): AirReading {
     try {
-        const { device_id, pm25, pm10 } = input;
+        const { device_id, temperature, humidity, air_quality_ppm } = input;
 
-        // Calculate AQI
-        const aqiInfo = getAQIInfo(pm25, pm10);
+        // Calculate AQI from MQ135 PPM
+        const aqiInfo = getAQIInfo(temperature, humidity, air_quality_ppm);
 
         // Store in database
         const stmt = db.prepare(`
-      INSERT INTO air_readings (device_id, pm25, pm10, aqi, air_quality_level)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO air_readings (device_id, temperature, humidity, air_quality_ppm, aqi, air_quality_level)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
         const result = stmt.run(
             device_id,
-            pm25,
-            pm10,
+            temperature,
+            humidity,
+            air_quality_ppm,
             aqiInfo.aqi,
             aqiInfo.level
         );
@@ -35,14 +36,15 @@ export function storeReading(input: Omit<AirReadingInput, 'api_key'>): AirReadin
         const reading: AirReading = {
             id: Number(result.lastInsertRowid),
             device_id,
-            pm25,
-            pm10,
+            temperature,
+            humidity,
+            air_quality_ppm,
             aqi: aqiInfo.aqi,
             air_quality_level: aqiInfo.level,
             timestamp: new Date().toISOString()
         };
 
-        logger.info(`Stored reading for device ${device_id}: AQI ${aqiInfo.aqi}`);
+        logger.info(`Stored reading for device ${device_id}: AQI ${aqiInfo.aqi} (Temp: ${temperature}°C, Humidity: ${humidity}%, PPM: ${air_quality_ppm})`);
 
         return reading;
     } catch (error) {
@@ -148,8 +150,9 @@ export function getDeviceStatistics(deviceId: string, hours: number = 24) {
         AVG(aqi) as avg_aqi,
         MIN(aqi) as min_aqi,
         MAX(aqi) as max_aqi,
-        AVG(pm25) as avg_pm25,
-        AVG(pm10) as avg_pm10
+        AVG(temperature) as avg_temperature,
+        AVG(humidity) as avg_humidity,
+        AVG(air_quality_ppm) as avg_air_quality_ppm
       FROM air_readings
       WHERE device_id = ? AND timestamp >= ?
     `);
