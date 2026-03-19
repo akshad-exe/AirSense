@@ -10,7 +10,7 @@ export function AQIDisplay({ aqi }: AQIDisplayProps) {
     const category = getAQICategory(aqi);
 
     return (
-        <Card className={`relative overflow-hidden border-0 shadow-2xl transition-all duration-700 ${category.color} group`}>
+        <Card className={`relative overflow-hidden border-0 shadow-2xl transition-all duration-700 ${category.gradient} group`}>
             {/* Animated background pattern */}
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.4),transparent)]" />
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />

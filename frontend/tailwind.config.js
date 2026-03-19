@@ -1,6 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ["class"],
+    safelist: [
+        'gradient-good',
+        'gradient-moderate',
+        'gradient-poor',
+        'gradient-very-poor',
+        'gradient-severe',
+    ],
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
